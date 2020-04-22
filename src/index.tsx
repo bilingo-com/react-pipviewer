@@ -1,14 +1,31 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import React, { useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
+import * as serviceWorker from "./serviceWorker";
+import pipviewer from "./components/pipviewer";
+
+const APP = () => {
+  const videoRef = useRef(null);
+  useEffect(() => {
+    pipviewer(videoRef, {});
+  }, []);
+  return (
+    <div>
+      <video
+        ref={videoRef}
+        src={require("./assets/1.mp4")}
+        poster={require("./assets/1.png")}
+        controls
+      ></video>
+      <div style={{ height: "10000px" }}></div>
+    </div>
+  );
+};
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <APP />
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );
 
 // If you want your app to work offline and load faster, you can change
