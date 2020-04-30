@@ -9,7 +9,6 @@ interface IVideoAttrMap {
 
 const useVideoState = (ref: RefObject<HTMLVideoElement> | IVideoAttrMap) => {
   const [state, setState] = useState({});
-  //   console.log(ref.current);
   const updateState = useCallback(() => {
     const videoEl = ref.current;
     setState(
@@ -25,7 +24,7 @@ const useVideoState = (ref: RefObject<HTMLVideoElement> | IVideoAttrMap) => {
         return p;
       }, {})
     );
-  }, []);
+  }, [ref]);
 
   const bindEventsToUpdateState = useCallback(() => {
     const videoEl = ref.current;
@@ -56,35 +55,37 @@ const useVideoState = (ref: RefObject<HTMLVideoElement> | IVideoAttrMap) => {
         ? lastSource.addEventListener("error", updateState)
         : lastSource.attachEvent("error", updateState);
     }
-  }, []);
+  }, [ref, updateState]);
 
-  const unbindEvents = useCallback(() => {
-    const videoEl = ref.current;
-    EVENTS.forEach((event) => {
-      videoEl.removeEventListener
-        ? videoEl.removeEventListener(event.toLowerCase(), updateState)
-        : videoEl.detachEvent(`on${event.toLowerCase()}`, updateState);
-    });
+  const unbindEvents = useCallback(
+    (videoEl) => {
+      EVENTS.forEach((event) => {
+        videoEl.removeEventListener
+          ? videoEl.removeEventListener(event.toLowerCase(), updateState)
+          : videoEl.detachEvent(`on${event.toLowerCase()}`, updateState);
+      });
 
-    TRACKEVENTS.forEach((event) => {
-      // TODO: JSDom does not have this method on
-      // `textTracks`. Investigate so we can test this without this check.
-      videoEl.textTracks &&
-        videoEl.textTracks.removeEventListener &&
-        videoEl.textTracks.removeEventListener(
-          event.toLowerCase(),
-          updateState
-        );
-    });
+      TRACKEVENTS.forEach((event) => {
+        // TODO: JSDom does not have this method on
+        // `textTracks`. Investigate so we can test this without this check.
+        videoEl.textTracks &&
+          videoEl.textTracks.removeEventListener &&
+          videoEl.textTracks.removeEventListener(
+            event.toLowerCase(),
+            updateState
+          );
+      });
 
-    const sources = videoEl.getElementsByTagName("source");
-    if (sources.length) {
-      const lastSource = sources[sources.length - 1];
-      lastSource.removeEventListener
-        ? lastSource.removeEventListener("error", updateState)
-        : lastSource.detachEvent("onerror", updateState);
-    }
-  }, []);
+      const sources = videoEl.getElementsByTagName("source");
+      if (sources.length) {
+        const lastSource = sources[sources.length - 1];
+        lastSource.removeEventListener
+          ? lastSource.removeEventListener("error", updateState)
+          : lastSource.detachEvent("onerror", updateState);
+      }
+    },
+    [updateState]
+  );
 
   useEffect(() => {
     if (ref.current) {
@@ -94,10 +95,10 @@ const useVideoState = (ref: RefObject<HTMLVideoElement> | IVideoAttrMap) => {
 
     return () => {
       if (current) {
-        unbindEvents();
+        unbindEvents(current);
       }
     };
-  }, [ref]);
+  }, [bindEventsToUpdateState, ref, unbindEvents]);
 
   return state;
 };

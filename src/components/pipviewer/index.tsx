@@ -1,75 +1,91 @@
-import React, { useEffect, useRef, useState, RefObject } from "react";
+import React, { useEffect, useState, RefObject } from "react";
 import ReactDOM from "react-dom";
+import Player from "./player";
 import useInViewport from "../../hooks/useInViewport";
+import { isBoolean } from "../../utils/tools";
 import useVideoState from "../../hooks/useVideoState";
-import Portal from "../protal";
-import Overlay from "./overlay";
 
-import "./index.scss";
-import useHover from "../../hooks/useHover";
-
-const PIPVERWER_ZINDEX = 9999;
-
-interface PlayerProps {
-  videoPlayer?: React.ReactNode;
-  videoRef: RefObject<HTMLVideoElement>;
-  visible?: boolean;
-  afterClose?: () => void;
+interface IVideoAttrMap {
+  [key: string]: any;
+  [index: number]: any;
 }
 
-const Player = (props: PlayerProps) => {
-  const pipVideoRef = useRef<HTMLVideoElement>(null);
-  const pipViewerRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(props.visible);
-  const [videoInfo, setVideoInfo] = useState<any>({});
-  const { isInviewport } = useInViewport(props.videoRef);
-  const videoState = useVideoState(pipVideoRef);
+interface PlayerProps {
+  videoRef: RefObject<HTMLVideoElement>;
+  visible: boolean;
+  destroy: () => void;
+  styles: React.CSSProperties;
+  [key: string]: any;
+}
 
-  useEffect(() => {
-    setVisible(!isInviewport);
-  }, [visible, isInviewport]);
+const PlayerConnect = (props: PlayerProps) => {
+  const [visible, setVisible] = useState<boolean>(props.visible);
+  const [isToggleClose, setIsToggleClose] = useState<boolean>(false);
+  const { isInviewport } = useInViewport(props.videoRef, props.viewportPercent);
+  const [preVideoPaused, setVideoPaused] = useState<boolean>();
+  const videoState = useVideoState(props.videoRef) as IVideoAttrMap;
+  const [pipVideoState, setPipVideoState] = useState<IVideoAttrMap>();
 
   useEffect(() => {
     if (props.videoRef.current) {
-      const $el = props.videoRef.current;
-      setVideoInfo({
-        src: $el.getAttribute("src"),
-        poster: $el.getAttribute("poster"),
-      });
+      setVideoPaused(props.videoRef.current.paused);
     }
-  }, [props.videoRef]);
+  }, [props.videoRef, videoState]);
 
-  return (
-    <Portal>
-      <div
-        className="pipviewer-container"
-        ref={pipViewerRef}
-        style={{ display: visible ? "flex" : "none" }}
-      >
-        <video
-          ref={pipVideoRef}
-          className="pip-video"
-          src={videoInfo.src}
-          poster={videoInfo.poster}
-        ></video>
-        <div className="layer-wrapper">
-          <Overlay videoState={videoState} videoEl={pipVideoRef} />
-        </div>
-      </div>
-    </Portal>
-  );
+  useEffect(() => {
+    if (isInviewport && isToggleClose) {
+      setIsToggleClose(false);
+    }
+    if (!isToggleClose) {
+      setVisible(!isInviewport);
+    }
+    // if (props.videoRef.current && isBoolean(preVideoPaused) && pipVideoState) {
+    //   const { paused, currentTime } = pipVideoState;
+    //   console.log(paused, currentTime, preVideoPaused);
+    //   const $el = props.videoRef.current;
+    //   if (visible) {
+    //     $el.pause();
+    //   } else {
+    //     $el.currentTime = currentTime;
+    //     $el.play();
+    //   }
+    // }
+  }, [isInviewport, isToggleClose]);
+
+  function onClose() {
+    setIsToggleClose(true);
+    setVisible(false);
+  }
+
+  return visible ? (
+    <Player
+      {...props}
+      onClose={onClose}
+      visible={visible}
+      getPipVideoState={setPipVideoState}
+    />
+  ) : null;
 };
 
-interface IPipviewerOptions {}
+interface IPipviewerOptions {
+  useParentVideoState: boolean;
+  viewportPercent: number;
+  autoplay: boolean;
+}
 
-export default function pipviewer(
-  ref: RefObject<HTMLVideoElement>,
-  options: IPipviewerOptions
-) {
+interface IPipviewerProps {
+  ref: RefObject<HTMLVideoElement>;
+  options?: IPipviewerOptions;
+}
+
+export default function pipviewer({
+  ref,
+  options = { useParentVideoState: true, viewportPercent: 50, autoplay: true },
+}: IPipviewerProps) {
   const div = document.createElement("div");
   document.body.appendChild(div);
 
-  let currentConfig = { close, visible: true } as any;
+  let currentConfig = { destroy, visible: false } as any;
   function destroy() {
     const unmountResult = ReactDOM.unmountComponentAtNode(div);
     if (unmountResult && div.parentNode) {
@@ -78,17 +94,10 @@ export default function pipviewer(
   }
 
   function render(config: any) {
-    ReactDOM.render(<Player {...config} videoRef={ref} />, div);
+    const playerProps = { ...options, ...config };
+    ReactDOM.render(<PlayerConnect {...playerProps} videoRef={ref} />, div);
   }
 
-  function close(...args: any[]) {
-    currentConfig = {
-      ...currentConfig,
-      visible: false,
-      afterClose: destroy,
-    };
-    render(currentConfig);
-  }
   render(currentConfig);
   return {
     destroy,

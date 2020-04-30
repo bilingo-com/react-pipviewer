@@ -1,19 +1,24 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 
 const POSITION = { x: 0, y: 0 };
+const PIPVERWER_ZINDEX = 9999;
 
-interface IProps {
-  children?: React.ReactNode;
-  id?: string;
-  onDrag?: any;
-  onDragEnd?: any;
+interface IPosition {
+  x: number;
+  y: number;
 }
 
-const Draggable = ({ children, id, onDrag, onDragEnd }: IProps) => {
+interface IProps {
+  children: React.ReactNode;
+  position: IPosition;
+}
+
+const Draggable = ({ children, position }: IProps) => {
   const [state, setState] = useState({
     isDragging: false,
     origin: POSITION,
     translation: POSITION,
+    position,
   });
 
   const handleMouseDown = useCallback(({ clientX, clientY }) => {
@@ -31,14 +36,17 @@ const Draggable = ({ children, id, onDrag, onDragEnd }: IProps) => {
         y: clientY - state.origin.y,
       };
 
+      const position = {
+        x: state.position.x + translation.x,
+        y: state.position.y + translation.y,
+      };
       setState((state) => ({
         ...state,
         translation,
+        position,
       }));
-
-      onDrag({ translation, id });
     },
-    [state.origin, onDrag, id]
+    [state.origin]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -46,9 +54,7 @@ const Draggable = ({ children, id, onDrag, onDragEnd }: IProps) => {
       ...state,
       isDragging: false,
     }));
-
-    onDragEnd();
-  }, [onDragEnd]);
+  }, []);
 
   useEffect(() => {
     if (state.isDragging) {
@@ -57,21 +63,24 @@ const Draggable = ({ children, id, onDrag, onDragEnd }: IProps) => {
     } else {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
-
-      // setState((state) => ({ ...state, translation: { x: 0, y: 0 } }));
     }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
   }, [state.isDragging, handleMouseMove, handleMouseUp]);
 
   const styles = useMemo(
     () =>
       ({
         cursor: state.isDragging ? "-webkit-grabbing" : "-webkit-grab",
-        transform: `translate(${state.translation.x}px, ${state.translation.y}px)`,
-        transition: state.isDragging ? "none" : "transform 500ms",
-        zIndex: state.isDragging ? 2 : 1,
-        position: state.isDragging ? "absolute" : "relative",
+        position: "fixed",
+        top: `${state.position.y}px`,
+        left: `${state.position.x}px`,
+        transition: state.isDragging ? "none" : "top left 500ms",
+        zIndex: PIPVERWER_ZINDEX,
       } as React.CSSProperties),
-    [state.isDragging, state.translation]
+    [state.isDragging, state.position.x, state.position.y]
   );
 
   return (

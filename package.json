@@ -1,9 +1,16 @@
 {
   "name": "react-pipviewer",
   "version": "0.1.0",
-  "private": true,
+  "main": "./src/components/index.tsx",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bilingo-com/react-pipviewer.git"
+  },
+  "author": "murrayee",
   "dependencies": {
+    "@babel/cli": "^7.8.4",
     "@babel/core": "7.9.0",
+    "@babel/preset-typescript": "^7.9.0",
     "@svgr/webpack": "4.3.3",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
@@ -40,6 +47,8 @@
     "jest-environment-jsdom-fourteen": "1.0.1",
     "jest-resolve": "24.9.0",
     "jest-watch-typeahead": "0.4.2",
+    "less": "^3.11.1",
+    "less-loader": "^6.0.0",
     "mini-css-extract-plugin": "0.9.0",
     "optimize-css-assets-webpack-plugin": "5.0.3",
     "pnp-webpack-plugin": "1.6.4",
@@ -61,6 +70,7 @@
     "ts-pnp": "1.1.6",
     "typescript": "~3.7.2",
     "url-loader": "2.3.0",
+    "usevideostate": "^1.0.0",
     "webpack": "4.42.0",
     "webpack-dev-server": "3.10.3",
     "webpack-manifest-plugin": "2.2.0",
@@ -69,7 +79,8 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js"
+    "test": "node scripts/test.js",
+    "lib": "babel ./src --out-dir ./lib  --presets @babel/preset-typescript"
   },
   "eslintConfig": {
     "extends": "react-app"

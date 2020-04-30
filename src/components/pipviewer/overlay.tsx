@@ -1,18 +1,22 @@
 import React, { RefObject, useEffect, useState, SyntheticEvent } from "react";
-import "./overlay.scss";
+import useVideoState from "../../hooks/useVideoState";
+import "./overlay.less";
+
+interface IVideoAttrMap {
+  [key: string]: any;
+  [index: number]: any;
+}
 
 interface IOverlayProps {
   videoEl: RefObject<HTMLVideoElement>;
-  videoState: {
-    [key: string]: any;
-    [index: number]: any;
-  };
+  onClose: () => void;
 }
 
-const Overlay = ({ videoState, videoEl }: IOverlayProps) => {
+const Overlay = ({ onClose, videoEl }: IOverlayProps) => {
   const [buffered, setBuffered] = useState(0);
   const [played, setPlayed] = useState(0);
   const [reload, setReload] = useState(false);
+  const videoState = useVideoState(videoEl) as IVideoAttrMap;
 
   useEffect(() => {
     const { buffered, duration, currentTime } = videoState;
@@ -40,7 +44,7 @@ const Overlay = ({ videoState, videoEl }: IOverlayProps) => {
     }
   }
 
-  function reloadVideo(event: SyntheticEvent<any>) {
+  function reloadVideo() {
     if (videoEl.current) {
       videoEl.current.currentTime = 0;
       videoEl.current.play();
@@ -49,7 +53,7 @@ const Overlay = ({ videoState, videoEl }: IOverlayProps) => {
 
   return (
     <div className="pipviewer-overlay">
-      <div className="icon-inner close-inner">
+      <div className="icon-inner close-inner" onClick={onClose}>
         <i className="icon-close" />
       </div>
       {videoState.paused && !reload && (
@@ -79,7 +83,7 @@ const Overlay = ({ videoState, videoEl }: IOverlayProps) => {
             type="range"
             onChange={setCurrentTime}
             className="input"
-            value={played}
+            value={played || 0}
           />
         </div>
       </div>
