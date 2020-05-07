@@ -49,4 +49,4 @@ pipviewer(Object)
 
 ## TODO
 
-- [ ] 如何优雅实现两个 video 之间属性互相继承？
+- [ ] 两个video属性双绑
