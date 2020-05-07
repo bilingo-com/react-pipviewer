@@ -50,3 +50,8 @@ pipviewer(Object)
 ## TODO
 
 - [ ] 两个video属性双绑
+- [ ] 自定义样式，包括overlay
+- [ ] video组件自定义
+- [ ] 优化拖动效果
+- [ ] 打包优化
+
